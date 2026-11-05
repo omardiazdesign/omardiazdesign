@@ -1,0 +1,68 @@
+{
+  "studioName": "STUDIO / 01",
+  "heroHeadline": "POWERFUL BOLD DYNAMIC BRANDS",
+  "heroSub": "Independent Brand Identity, Custom Typography & Visual Systems.",
+  "email": "contact@studioportfolio.com",
+  "locations": "Las Vegas, NV — Available Worldwide",
+  "capabilities": [
+    "Brand Visual Identity",
+    "Logo & Mark Design",
+    "Art Direction",
+    "Packaging Design",
+    "Commercial Photography",
+    "Custom Typography"
+  ],
+  "philosophy": {
+    "p1Title": "FEARLESS CREATIVITY",
+    "p1Text": "We push boundaries and explore new horizons. Relentless passion for typography, composition, and raw aesthetics fuels groundbreaking work that leaves an enduring mark.",
+    "p2Title": "NO PRETEXT, ALL PURPOSE",
+    "p2Text": "Direct dedication defines every engagement. Unlike bloated corporate agencies, we work closely to translate ambitious visions into uncompromising reality.",
+    "p3Title": "ENDURING IMPACT",
+    "p3Text": "We craft identities built to weather shifting trends—delivering timeless clarity, tactile depth, and immediate market recognition."
+  },
+  "projects": [
+    {
+      "id": "proj-1",
+      "title": "AURA LEATHER",
+      "tag": "Brand Identity & Packaging",
+      "client": "Aura Goods Co.",
+      "year": "2026",
+      "tagline": "Crafting a rugged, utilitarian identity built without compromise.",
+      "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1600&q=80",
+      "desc": "A comprehensive identity overhaul combining industrial typography with brutalist balance. Engineered for resilience and functional elegance across physical goods and high-end retail.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1600&q=80",
+        "https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=1600&q=80",
+        "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=1600&q=80"
+      ]
+    },
+    {
+      "id": "proj-2",
+      "title": "KINETIC APPAREL",
+      "tag": "Visual System & Art Direction",
+      "client": "Kinetic Technical Wear",
+      "year": "2026",
+      "tagline": "A high-performance technical apparel brand built for rugged environments.",
+      "image": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1600&q=80",
+      "desc": "Stripped-back typography and utilitarian iconography. Every collateral element emphasizes structural clarity and movement across desert, alpine, and urban climates.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1600&q=80",
+        "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1600&q=80"
+      ]
+    },
+    {
+      "id": "proj-3",
+      "title": "SOLARIS COFFEE",
+      "tag": "Packaging & Merchandising",
+      "client": "Solaris Roasters",
+      "year": "2025",
+      "tagline": "Specialty small-batch coffee identity rooted in desert tones.",
+      "image": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1600&q=80",
+      "desc": "Combining deep earth tones with stark metallic stamping, creating an unmistakable tactile presence in specialty boutiques.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1600&q=80",
+        "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80"
+      ]
+    }
+  ]
+}

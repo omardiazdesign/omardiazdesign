@@ -1,0 +1,66 @@
+backend:
+  name: git-gateway
+  branch: main # or master
+
+media_folder: "assets/uploads"
+public_folder: "/assets/uploads"
+
+collections:
+  - name: "site_data"
+    label: "Site Settings & Content"
+    files:
+      - name: "content"
+        label: "Global Portfolio Content"
+        file: "data/site-content.json"
+        fields:
+          - label: "Studio Name"
+            name: "studioName"
+            widget: "string"
+
+          - label: "Hero Display Headline"
+            name: "heroHeadline"
+            widget: "string"
+
+          - label: "Hero Sub-headline"
+            name: "heroSub"
+            widget: "string"
+
+          - label: "Studio Email"
+            name: "email"
+            widget: "string"
+
+          - label: "Studio Locations"
+            name: "locations"
+            widget: "string"
+
+          - label: "Capabilities & Services"
+            name: "capabilities"
+            widget: "list"
+            field: { label: "Service Name", name: "item", widget: "string" }
+
+          - label: "Philosophy & Manifesto"
+            name: "philosophy"
+            widget: "object"
+            fields:
+              - { label: "Pillar 1 Title", name: "p1Title", widget: "string" }
+              - { label: "Pillar 1 Text", name: "p1Text", widget: "text" }
+              - { label: "Pillar 2 Title", name: "p2Title", widget: "string" }
+              - { label: "Pillar 2 Text", name: "p2Text", widget: "text" }
+              - { label: "Pillar 3 Title", name: "p3Title", widget: "string" }
+              - { label: "Pillar 3 Text", name: "p3Text", widget: "text" }
+
+          - label: "Projects / Case Studies"
+            name: "projects"
+            widget: "list"
+            fields:
+              - { label: "Project Title", name: "title", widget: "string" }
+              - { label: "Tag / Category", name: "tag", widget: "string" }
+              - { label: "Client", name: "client", widget: "string" }
+              - { label: "Year", name: "year", widget: "string" }
+              - { label: "Short Tagline", name: "tagline", widget: "string" }
+              - { label: "Cover Image", name: "image", widget: "image" }
+              - { label: "Full Narrative Description", name: "desc", widget: "text" }
+              - label: "Gallery Showcase Images"
+                name: "gallery"
+                widget: "list"
+                field: { label: "Image File", name: "img", widget: "image" }
