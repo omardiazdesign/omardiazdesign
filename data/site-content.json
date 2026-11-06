@@ -63,6 +63,15 @@
       "id": "proj-3",
       "image": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1600&q=80",
       "year": "2025"
+    },
+    {
+      "title": "Atomic Testing Museum",
+      "client": "ATM",
+      "image": "/assets/uploads/atomic-testing-museum-cover.png",
+      "tag": "Branding",
+      "year": "2019",
+      "tagline": "Atomic Testing Museum Las Vegas",
+      "desc": "A trifold brochure done for the Atomic Testing Museum in las Vegas."
     }
   ]
 }
