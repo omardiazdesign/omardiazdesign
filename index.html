@@ -1,29 +1,2099 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Design Studio & Portfolio</title>
-  <!-- Google Fonts: Anton & Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- React & Babel for in-browser JSX compilation -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-</head>
-<body class="bg-[#ffffff] text-[#0a0a0c]">
-  <div id="root"></div>
+// ... existing code ...
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { 
+  ArrowUpRight, 
+  Menu as MenuIcon, 
+  X, 
+  Lock, 
+  Unlock, 
+  Plus, 
+  Trash2, 
+  Edit3, 
+  CheckCircle2, 
+  Eye, 
+  LayoutDashboard, 
+  FolderGit2, 
+  Mail, 
+  Sliders, 
+  LogOut, 
+  RefreshCw, 
+  Download, 
+  ExternalLink,
+  ChevronRight,
+  Sparkles,
+  Layers,
+  ArrowRight,
+  ShieldAlert,
+  ShieldCheck,
+  Key,
+  AlertTriangle,
+  Clock,
+  History,
+  Copy,
+  Check
+} from 'lucide-react';
 
-  <!-- Place the App Component Here -->
-  <script type="text/babel">
-    // Paste the entire React component code here
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  </script>
-</body>
-</html>
+// --- CRYPTOGRAPHIC UTILITIES (Web Crypto API SHA-256 with Salt) ---
+async function sha256Hex(text) {
+  const msgBuffer = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function hashPasswordWithSalt(password, salt) {
+  return await sha256Hex(`${salt}:${password}:famouswolf_pepper_2026`);
+}
+
+// Default credentials:
+// Initial master password is: "wolf2026"
+const DEFAULT_SALT = "wolf_salt_89a3f2b1";
+// Pre-calculated hash for ("wolf_salt_89a3f2b1:wolf2026:famouswolf_pepper_2026")
+const INITIAL_PWD_HASH = "d11019d08e50b73c4ebc0a6b72a6aee4f686940a45cf35e26715f5bc9bbad9fc";
+const DEFAULT_SECRET_SLUG = "studio-vault-ctrl";
+const SESSION_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
+
+// --- INITIAL MOCK DATA ---
+const INITIAL_PROJECTS = [
+  {
+    id: 'buffe-leather',
+    title: 'Büffe Leather',
+    tagline: 'Crafting Büffe’s identity—strong, timeless, and built without compromise.',
+    client: 'Büffe Heritage & Co.',
+    year: '2025',
+    category: 'Branding & Packaging',
+    deliverables: ['Brand Identity', 'Packaging Design', 'Logo System', 'Art Direction'],
+    heroImage: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=1600&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80'
+    ],
+    overview: 'Büffe is built on durability and purpose, designed for those who take leather care seriously while embracing an animal-free, future-forward ethos.',
+    story: 'The visual identity bridges heritage craftsmanship and high-fashion modernity. Utilizing a stark geometric layout combined with a custom blackletter logotype.',
+    featured: true,
+    published: true
+  },
+  {
+    id: 'panacea-apparel',
+    title: 'Panacea Studio',
+    tagline: 'A clothing brand inspired by the relentless pursuit of greatness and physical grit.',
+    client: 'Panacea Athletics',
+    year: '2025',
+    category: 'Apparel & Direction',
+    deliverables: ['Custom Typography', 'Apparel Graphics', 'Lookbook Art Direction', 'Brand Strategy'],
+    heroImage: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1600&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80'
+    ],
+    overview: 'Born out of heavy lifting, endurance track culture, and high-spec athletic wear.',
+    story: 'We crafted an assertive visual language featuring high-contrast editorial photography and brutalist poster typesetting.',
+    featured: true,
+    published: true
+  },
+  {
+    id: 'mexigo-transit',
+    title: 'Mexigo',
+    tagline: 'The brand overhaul that puts movement and vibrant discovery back into travel.',
+    client: 'Mexigo Adventures',
+    year: '2024',
+    category: 'Identity & Web',
+    deliverables: ['Rebranding', 'Design System', 'Transit Posters', 'Digital UI/UX'],
+    heroImage: 'https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?auto=format&fit=crop&w=1600&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80'
+    ],
+    overview: 'Connecting metropolitan commuters with off-grid rural expeditions across Central America.',
+    story: 'Bold kinetic typography and sunshine-saturated ochre pigments bring a distinct sense of vitality.',
+    featured: true,
+    published: true
+  },
+  {
+    id: 'birdbox-culinary',
+    title: 'Birdbox',
+    tagline: 'Creating a playful culinary system built on geometric form and raw flavour.',
+    client: 'Birdbox Artisan Deli',
+    year: '2024',
+    category: 'Packaging & Illustration',
+    deliverables: ['Custom Character Design', 'Takeaway Packaging', 'Storefront Murals'],
+    heroImage: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1600&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80'
+    ],
+    overview: 'A boutique rotisserie and craft street dining venue redefining fast-casual gourmet food.',
+    story: 'We mixed 1970s playful mascots with sleek minimalist corrugated container layouts.',
+    featured: true,
+    published: true
+  },
+  {
+    id: 'proper-job',
+    title: 'Proper Job',
+    tagline: 'A visual renaissance pioneering a new benchmark for local craftsmanship and trades.',
+    client: 'Proper Job Guild UK',
+    year: '2024',
+    category: 'Brand Visual Identity',
+    deliverables: ['Guild Crest Modernization', 'Vehicle Fleet Wraps', 'Physical Signage'],
+    heroImage: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1600&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80'
+    ],
+    overview: 'Honouring honest labor and traditional artisan building guilds in the UK South West.',
+    story: 'A no-nonsense typographic identity built upon durable letterforms and heavyweight patches.',
+    featured: false,
+    published: true
+  }
+];
+
+const INITIAL_SETTINGS = {
+  studioName: 'FAMOUS WOLF',
+  studioSub: 'DESIGN CO',
+  heroHeadlineWord1: 'POWERFUL',
+  heroHeadlineWord2: 'BOLD',
+  heroHeadlineWord3: 'DYNAMIC',
+  heroHeadlineEnd: 'BRANDS.',
+  heroTagline: 'Fearless creative dedication and uncompromising brand systems for ventures worldwide.',
+  contactEmail: 'hey@famouswolfdesign.com',
+  location1: 'Clifton, Bristol (UK)',
+  location2: 'Pilton, Somerset (UK)',
+  ctaTitle: 'READY TO COLLABORATE?'
+};
+
+const INITIAL_INQUIRIES = [
+  {
+    id: 'inq-101',
+    date: '2026-11-04',
+    name: 'Marcus Vance',
+    email: 'm.vance@vancetech.io',
+    businessType: 'SaaS / AI FinTech',
+    budget: '£15k+ - Comprehensive Rebrands',
+    timeframe: 'March',
+    services: ['Brand Visual Identity Design', 'Brand Strategy'],
+    location: 'London, UK',
+    notes: 'Looking for a complete reimagination of our visual identity prior to Series A announcement.',
+    status: 'New'
+  }
+];
+
+const SERVICES_LIST = [
+  { title: 'Branding & Identity', desc: 'Holistic design systems engineered to differentiate and conquer markets.' },
+  { title: 'Logo Design & Monograms', desc: 'Iconic, memorable silhouettes crafted with obsessive typographic detail.' },
+  { title: 'Art Direction', desc: 'Unified visual tone across photography, digital products, and motion.' },
+  { title: 'Apparel Design', desc: 'Custom streetwear cut & sew graphics, tech-packs, and merchandising.' },
+  { title: 'Illustration', desc: 'Hand-rendered vectors, mascot design, and custom editorial graphics.' },
+  { title: 'Brand Strategy', desc: 'Positioning, competitive analysis, tone-of-voice, and narrative architecture.' },
+  { title: 'Packaging Design', desc: 'Tactile boxes, labels, and unboxing rituals that convert shelf-browsers.' },
+  { title: 'Photography Direction', desc: 'Campaign styling, studio product sessions, and high-impact editorial shoots.' }
+];
+
+const CLIENT_LOGOS = [
+  'ADOBE', 'TREYARCH', 'VANS OFF THE WALL', 'RED BULL', 'NIKE SB', 'PORSCHE CLUB', 'GORE-TEX'
+];
+
+export default function App() {
+  // Navigation & View States
+  const [currentView, setCurrentView] = useState('home'); // 'home', 'case-study', 'contact', 'admin'
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Security & Hardened Auth State
+  const [secretSlug, setSecretSlug] = useState(() => {
+    return localStorage.getItem('fw_secret_slug') || DEFAULT_SECRET_SLUG;
+  });
+  const [pwdSalt, setPwdSalt] = useState(() => {
+    return localStorage.getItem('fw_pwd_salt') || DEFAULT_SALT;
+  });
+  const [pwdHash, setPwdHash] = useState(() => {
+    return localStorage.getItem('fw_pwd_hash') || INITIAL_PWD_HASH;
+  });
+  const [auditLogs, setAuditLogs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('fw_audit_logs');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Session & Brute Force Prevention
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [failedAttempts, setFailedAttempts] = useState(() => {
+    return parseInt(sessionStorage.getItem('fw_failed_attempts') || '0', 10);
+  });
+  const [lockoutUntil, setLockoutUntil] = useState(() => {
+    return parseInt(sessionStorage.getItem('fw_lockout_until') || '0', 10);
+  });
+  const [lockoutRemaining, setLockoutRemaining] = useState(0);
+  const [sessionRemainingMinutes, setSessionRemainingMinutes] = useState(20);
+  const [copiedSlug, setCopiedSlug] = useState(false);
+
+  // Data Stores
+  const [projects, setProjects] = useState(() => {
+    try {
+      const saved = localStorage.getItem('fw_projects');
+      return saved ? JSON.parse(saved) : INITIAL_PROJECTS;
+    } catch {
+      return INITIAL_PROJECTS;
+    }
+  });
+
+  const [settings, setSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('fw_settings');
+      return saved ? JSON.parse(saved) : INITIAL_SETTINGS;
+    } catch {
+      return INITIAL_SETTINGS;
+    }
+  });
+
+  const [inquiries, setInquiries] = useState(() => {
+    try {
+      const saved = localStorage.getItem('fw_inquiries');
+      return saved ? JSON.parse(saved) : INITIAL_INQUIRIES;
+    } catch {
+      return INITIAL_INQUIRIES;
+    }
+  });
+
+  // Admin UI Controls
+  const [adminTab, setAdminTab] = useState('projects'); // 'projects', 'inquiries', 'settings', 'security'
+  const [editingProject, setEditingProject] = useState(null);
+  const [formSuccessMessage, setFormSuccessMessage] = useState('');
+  const [newPasswordVal, setNewPasswordVal] = useState('');
+  const [confirmPasswordVal, setConfirmPasswordVal] = useState('');
+  const [newSlugVal, setNewSlugVal] = useState('');
+  const [secSuccessMsg, setSecSuccessMsg] = useState('');
+
+  // Synchronize state with LocalStorage
+  useEffect(() => {
+    localStorage.setItem('fw_projects', JSON.stringify(projects));
+  }, [projects]);
+
+  useEffect(() => {
+    localStorage.setItem('fw_settings', JSON.stringify(settings));
+  }, [settings]);
+
+  useEffect(() => {
+    localStorage.setItem('fw_inquiries', JSON.stringify(inquiries));
+  }, [inquiries]);
+
+  useEffect(() => {
+    localStorage.setItem('fw_secret_slug', secretSlug);
+  }, [secretSlug]);
+
+  useEffect(() => {
+    localStorage.setItem('fw_pwd_salt', pwdSalt);
+  }, [pwdSalt]);
+
+  useEffect(() => {
+    localStorage.setItem('fw_pwd_hash', pwdHash);
+  }, [pwdHash]);
+
+  useEffect(() => {
+    localStorage.setItem('fw_audit_logs', JSON.stringify(auditLogs.slice(0, 50)));
+  }, [auditLogs]);
+
+  const addAuditLog = useCallback((event, status) => {
+    const entry = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toLocaleTimeString() + ' ' + new Date().toLocaleDateString(),
+      event,
+      status
+    };
+    setAuditLogs(prev => [entry, ...prev.slice(0, 49)]);
+  }, []);
+
+  // Check Session Expiration
+  useEffect(() => {
+    const token = sessionStorage.getItem('fw_auth_session_token');
+    const authTime = parseInt(sessionStorage.getItem('fw_auth_timestamp') || '0', 10);
+    
+    if (token && authTime) {
+      const elapsed = Date.now() - authTime;
+      if (elapsed < SESSION_TIMEOUT_MS) {
+        setIsAdminLoggedIn(true);
+      } else {
+        // Expired
+        sessionStorage.removeItem('fw_auth_session_token');
+        sessionStorage.removeItem('fw_auth_timestamp');
+        setIsAdminLoggedIn(false);
+      }
+    }
+  }, []);
+
+  // Timer loop for Lockout countdown & Session expiry
+  useEffect(() => {
+    const timer = setInterval(() => {
+      // 1. Lockout countdown check
+      const now = Date.now();
+      if (lockoutUntil > now) {
+        setLockoutRemaining(Math.ceil((lockoutUntil - now) / 1000));
+      } else {
+        setLockoutRemaining(0);
+      }
+
+      // 2. Active session tracker
+      if (isAdminLoggedIn) {
+        const authTime = parseInt(sessionStorage.getItem('fw_auth_timestamp') || '0', 10);
+        const elapsed = now - authTime;
+        const left = Math.max(0, Math.ceil((SESSION_TIMEOUT_MS - elapsed) / 60000));
+        setSessionRemainingMinutes(left);
+
+        if (elapsed >= SESSION_TIMEOUT_MS) {
+          handleAdminLogout(true);
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [lockoutUntil, isAdminLoggedIn]);
+
+  // Route Listener: Only show Admin if hash matches the secret slug
+  useEffect(() => {
+    const checkHashRoute = () => {
+      const hash = window.location.hash.replace(/^#\/?/, '');
+      if (hash === secretSlug) {
+        setCurrentView('admin');
+      } else if (currentView === 'admin' && hash !== secretSlug) {
+        setCurrentView('home');
+      }
+    };
+
+    checkHashRoute();
+    window.addEventListener('hashchange', checkHashRoute);
+    return () => window.removeEventListener('hashchange', checkHashRoute);
+  }, [secretSlug, currentView]);
+
+  // Owner Secret Key Combination Trigger: [Ctrl + Shift + Alt + A]
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.altKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        window.location.hash = `#/${secretSlug}`;
+        setCurrentView('admin');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [secretSlug]);
+
+  // Activity updater to extend valid active sessions
+  const registerUserActivity = useCallback(() => {
+    if (isAdminLoggedIn) {
+      sessionStorage.setItem('fw_auth_timestamp', Date.now().toString());
+    }
+  }, [isAdminLoggedIn]);
+
+  // Navigation Helper (Cleans hash when returning to public views)
+  const navigateTo = (view, projectId = null) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (view !== 'admin') {
+      window.location.hash = '';
+    }
+    setCurrentView(view);
+    if (projectId) setSelectedProjectId(projectId);
+    setMobileMenuOpen(false);
+  };
+
+  const activeProject = useMemo(() => {
+    return projects.find(p => p.id === selectedProjectId) || projects[0];
+  }, [projects, selectedProjectId]);
+
+  // --- SECURE AUTHENTICATION HANDLER ---
+  const handleAdminLogin = async (e) => {
+    e.preventDefault();
+    if (lockoutRemaining > 0) return;
+
+    const computedHash = await hashPasswordWithSalt(passwordInput, pwdSalt);
+
+    if (computedHash === pwdHash) {
+      // Success
+      setIsAdminLoggedIn(true);
+      const token = 'fw_sec_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+      sessionStorage.setItem('fw_auth_session_token', token);
+      sessionStorage.setItem('fw_auth_timestamp', Date.now().toString());
+      sessionStorage.removeItem('fw_failed_attempts');
+      sessionStorage.removeItem('fw_lockout_until');
+      setFailedAttempts(0);
+      setLockoutUntil(0);
+      setAuthError('');
+      setPasswordInput('');
+      addAuditLog('Admin Logged In', 'SUCCESS');
+    } else {
+      // Failed attempt
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+      sessionStorage.setItem('fw_failed_attempts', newAttempts.toString());
+      addAuditLog(`Failed Login Attempt (#${newAttempts})`, 'DENIED');
+
+      if (newAttempts >= 3) {
+        // Enforce 60-second exponential lockout
+        const lockDuration = 60 * 1000;
+        const lockTime = Date.now() + lockDuration;
+        setLockoutUntil(lockTime);
+        sessionStorage.setItem('fw_lockout_until', lockTime.toString());
+        setAuthError(`Security Lockout Triggered: Too many failed attempts. Try again in 60s.`);
+      } else {
+        setAuthError(`Invalid credentials. ${3 - newAttempts} attempt(s) remaining before security lockout.`);
+      }
+    }
+  };
+
+  const handleAdminLogout = (isAuto = false) => {
+    setIsAdminLoggedIn(false);
+    sessionStorage.removeItem('fw_auth_session_token');
+    sessionStorage.removeItem('fw_auth_timestamp');
+    addAuditLog(isAuto ? 'Session Inactivity Expired' : 'User Signed Out', 'INFO');
+    window.location.hash = '';
+    setCurrentView('home');
+  };
+
+  // Change Master Password Handler
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (!newPasswordVal || newPasswordVal.length < 6) {
+      setSecSuccessMsg('Error: Password must be at least 6 characters long.');
+      return;
+    }
+    if (newPasswordVal !== confirmPasswordVal) {
+      setSecSuccessMsg('Error: Passwords do not match.');
+      return;
+    }
+
+    const newSalt = 'salt_' + Math.random().toString(36).substring(2, 10);
+    const newHash = await hashPasswordWithSalt(newPasswordVal, newSalt);
+
+    setPwdSalt(newSalt);
+    setPwdHash(newHash);
+    setNewPasswordVal('');
+    setConfirmPasswordVal('');
+    setSecSuccessMsg('Master Password updated successfully and re-hashed with unique salt.');
+    addAuditLog('Master Password Updated', 'SECURITY');
+  };
+
+  // Change Secret Slug Handler
+  const handleChangeSlug = (e) => {
+    e.preventDefault();
+    const clean = newSlugVal.trim().replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase();
+    if (clean.length < 5) {
+      setSecSuccessMsg('Error: Secret slug must be at least 5 alphanumeric characters.');
+      return;
+    }
+    setSecretSlug(clean);
+    window.location.hash = `#/${clean}`;
+    setNewSlugVal('');
+    setSecSuccessMsg(`Secret path changed to: #${clean}`);
+    addAuditLog(`Secret Route Changed to #${clean}`, 'SECURITY');
+  };
+
+  // Contact Form Submission Handler
+  const handleContactSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const selectedServices = [];
+    formData.getAll('services').forEach(s => selectedServices.push(s));
+
+    const newInquiry = {
+      id: `inq-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      name: formData.get('name') || 'Anonymous Client',
+      email: formData.get('email') || '',
+      businessType: formData.get('businessType') || 'Undisclosed',
+      budget: formData.get('budget') || '£8,500 – £11,500',
+      timeframe: formData.get('timeframe') || 'Next 60 Days',
+      location: formData.get('location') || 'UK / Remote',
+      services: selectedServices.length > 0 ? selectedServices : ['Full Brand Suite'],
+      notes: formData.get('message') || '',
+      status: 'New'
+    };
+
+    setInquiries(prev => [newInquiry, ...prev]);
+    setFormSuccessMessage("Application received! We'll review your project details and get back to you within 24 hours.");
+    e.target.reset();
+  };
+
+  const handleResetData = () => {
+    if (window.confirm("Restore demo projects and configuration to defaults?")) {
+      setProjects(INITIAL_PROJECTS);
+      setSettings(INITIAL_SETTINGS);
+      setInquiries(INITIAL_INQUIRIES);
+      localStorage.clear();
+      setSecretSlug(DEFAULT_SECRET_SLUG);
+      setPwdSalt(DEFAULT_SALT);
+      setPwdHash(INITIAL_PWD_HASH);
+      window.location.hash = '';
+      navigateTo('home');
+    }
+  };
+
+  return (
+    <div 
+      onClick={registerUserActivity} 
+      onKeyDown={registerUserActivity}
+      className="min-h-screen bg-[#ffffff] text-[#111113] font-sans antialiased selection:bg-[#ee212e] selection:text-white flex flex-col justify-between"
+    >
+      
+      {/* 1. TOP STICKY NAVIGATION BAR (CLEAN & WHITE DOMINANT) */}
+      <header className="sticky top-0 z-50 bg-[#ffffff]/90 backdrop-blur-md border-b border-[#eaeaea] transition-all">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 py-5 flex items-center justify-between">
+          
+          {/* Logo / Brand Mark */}
+          <button 
+            onClick={() => navigateTo('home')} 
+            className="text-left group flex items-center gap-3 cursor-pointer focus:outline-none"
+          >
+            <div className="w-8 h-8 rounded-full bg-[#0a0a0c] text-white flex items-center justify-center font-black tracking-tighter text-xs group-hover:bg-[#ee212e] transition-colors duration-200">
+              FW
+            </div>
+            <div>
+              <span className="block font-black tracking-wider text-sm sm:text-base leading-none text-[#0a0a0c] font-mono uppercase">
+                {settings.studioName}
+              </span>
+              <span className="text-[10px] tracking-[0.25em] text-[#6b7280] uppercase block mt-1">
+                {settings.studioSub}
+              </span>
+            </div>
+          </button>
+
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-8 text-xs font-bold tracking-widest uppercase font-mono">
+            <button 
+              onClick={() => navigateTo('home')} 
+              className={`transition-colors hover:text-[#ee212e] ${currentView === 'home' ? 'text-[#ee212e]' : 'text-[#666670]'}`}
+            >
+              Work
+            </button>
+            <button 
+              onClick={() => {
+                navigateTo('home');
+                setTimeout(() => {
+                  document.getElementById('services-section')?.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+              }} 
+              className="text-[#666670] hover:text-[#ee212e] transition-colors"
+            >
+              Services
+            </button>
+            <button 
+              onClick={() => {
+                navigateTo('home');
+                setTimeout(() => {
+                  document.getElementById('philosophy-section')?.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+              }} 
+              className="text-[#666670] hover:text-[#ee212e] transition-colors"
+            >
+              Studio
+            </button>
+            <button 
+              onClick={() => navigateTo('contact')} 
+              className={`transition-colors hover:text-[#ee212e] ${currentView === 'contact' ? 'text-[#ee212e]' : 'text-[#666670]'}`}
+            >
+              Contact
+            </button>
+          </nav>
+
+          {/* Action Right CTA */}
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigateTo('contact')}
+              className="px-4 py-2 border border-[#0a0a0c] rounded-md text-xs font-bold uppercase tracking-wider text-[#0a0a0c] hover:bg-[#ee212e] hover:border-[#ee212e] hover:text-white transition-all duration-200 flex items-center gap-2"
+            >
+              Start Project
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Mobile Menu Hamburger */}
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-[#0a0a0c] md:hidden hover:text-[#ee212e] transition-colors"
+              aria-label="Toggle Navigation Menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <MenuIcon className="w-6 h-6" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Slide-down Drawer */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-[#fafafa] border-b border-[#e5e5e7] px-6 py-8 space-y-6">
+            <div className="flex flex-col gap-4 text-base font-bold uppercase tracking-wider font-mono">
+              <button 
+                onClick={() => navigateTo('home')} 
+                className="text-left text-[#0a0a0c] hover:text-[#ee212e] py-1 border-b border-[#e5e5e7]"
+              >
+                Selected Work
+              </button>
+              <button 
+                onClick={() => {
+                  navigateTo('home');
+                  setTimeout(() => {
+                    document.getElementById('services-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }} 
+                className="text-left text-[#0a0a0c] hover:text-[#ee212e] py-1 border-b border-[#e5e5e7]"
+              >
+                Capabilities & Services
+              </button>
+              <button 
+                onClick={() => {
+                  navigateTo('home');
+                  setTimeout(() => {
+                    document.getElementById('philosophy-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }} 
+                className="text-left text-[#0a0a0c] hover:text-[#ee212e] py-1 border-b border-[#e5e5e7]"
+              >
+                What We Stand For
+              </button>
+              <button 
+                onClick={() => navigateTo('contact')} 
+                className="text-left text-[#ee212e] hover:underline py-1"
+              >
+                Get Started / Contact
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* 2. MAIN BODY SWITCHER */}
+      <main className="flex-1">
+
+        {/* ========================================================
+            VIEW: HOMEPAGE (WHITE DOMINANT WITH #ee212e ACCENT)
+        ======================================================== */}
+        {currentView === 'home' && (
+          <div>
+            {/* HERO SECTION */}
+            <section className="relative px-5 sm:px-8 pt-16 md:pt-28 pb-20 max-w-7xl mx-auto border-b border-[#eaeaea]">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#e4e4e7] bg-[#f9f9fb] text-[#4b5563] text-xs font-mono uppercase tracking-widest shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-[#ee212e] animate-pulse"></span>
+                  Booking Q1 / Q2 Projects
+                </div>
+
+                {/* Massive Brutalist Typography Title */}
+                <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tight leading-[0.92] text-[#0a0a0c] uppercase break-words">
+                  {settings.heroHeadlineWord1}{' '}
+                  <span className="text-[#ee212e] italic underline decoration-4 underline-offset-8">
+                    {settings.heroHeadlineWord2}
+                  </span>{' '}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ee212e] to-[#ff5d66]">
+                    {settings.heroHeadlineWord3}
+                  </span>{' '}
+                  {settings.heroHeadlineEnd}
+                </h1>
+
+                {/* Subtitle & Hero Actions */}
+                <div className="pt-6 md:pt-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
+                  <p className="max-w-xl text-base sm:text-lg md:text-xl text-[#52525b] font-medium leading-relaxed">
+                    {settings.heroTagline}
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-4">
+                    <button 
+                      onClick={() => navigateTo('contact')}
+                      className="px-8 py-4 bg-[#ee212e] text-white font-extrabold uppercase text-xs tracking-widest rounded-md hover:bg-[#0a0a0c] transition-all duration-300 flex items-center gap-3 shadow-lg shadow-[#ee212e]/20"
+                    >
+                      LET'S WORK TOGETHER
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                    <a 
+                      href="#portfolio-grid" 
+                      className="px-6 py-4 border border-[#0a0a0c] hover:border-[#ee212e] hover:text-[#ee212e] text-[#0a0a0c] font-extrabold uppercase text-xs tracking-widest rounded-md transition-all"
+                    >
+                      EXPLORE ARCHIVE
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* CLIENT LOGOS MARQUEE / TICKER */}
+            <div className="border-b border-[#eaeaea] py-6 bg-[#f7f7f9] overflow-hidden">
+              <div className="max-w-7xl mx-auto px-5 sm:px-8 flex flex-col md:flex-row md:items-center gap-6">
+                <span className="text-xs font-mono uppercase tracking-widest text-[#71717a] shrink-0 font-bold">
+                  TRUSTED BY INDUSTRY MOVERS:
+                </span>
+                <div className="flex flex-wrap items-center gap-3 md:gap-4 flex-1">
+                  {CLIENT_LOGOS.map((client, idx) => (
+                    <span 
+                      key={idx}
+                      className="px-4 py-1.5 rounded-full border border-[#e4e4e7] text-xs font-mono font-bold tracking-widest text-[#27272a] bg-white hover:border-[#ee212e] hover:text-[#ee212e] transition-colors shadow-sm"
+                    >
+                      {client}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* FEATURED WORK / PORTFOLIO GRID */}
+            <section id="portfolio-grid" className="py-20 md:py-28 max-w-7xl mx-auto px-5 sm:px-8 border-b border-[#eaeaea]">
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-4">
+                <div>
+                  <span className="text-xs font-mono uppercase tracking-widest text-[#ee212e] font-bold block mb-2">
+                    // Selected Brand Engagements
+                  </span>
+                  <h2 className="text-3xl sm:text-5xl font-black uppercase text-[#0a0a0c] tracking-tight">
+                    Featured Work
+                  </h2>
+                </div>
+                <p className="text-sm text-[#71717a] max-w-md font-mono">
+                  Every brand system is forged with fearless craft, tactical commercial intent, and typographic precision.
+                </p>
+              </div>
+
+              {/* Case Study Cards */}
+              <div className="space-y-16">
+                {projects.filter(p => p.published).map((project, index) => {
+                  const isEven = index % 2 === 0;
+                  return (
+                    <div 
+                      key={project.id}
+                      className="group border border-[#e4e4e7] bg-white rounded-xl overflow-hidden hover:border-[#0a0a0c] hover:shadow-xl transition-all duration-300"
+                    >
+                      <div className={`grid grid-cols-1 lg:grid-cols-12 items-stretch ${isEven ? '' : 'lg:flex-row-reverse'}`}>
+                        
+                        {/* Image Showcase */}
+                        <div className={`lg:col-span-7 relative min-h-[340px] md:min-h-[460px] overflow-hidden ${isEven ? 'order-1' : 'order-1 lg:order-2'}`}>
+                          <img 
+                            src={project.heroImage} 
+                            alt={project.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                            loading="lazy"
+                          />
+                          <div className="absolute top-4 left-4">
+                            <span className="px-3 py-1 rounded bg-white/90 backdrop-blur-md text-[10px] font-mono tracking-widest uppercase border border-[#e4e4e7] text-[#0a0a0c] font-bold shadow-sm">
+                              {project.category}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Content Description */}
+                        <div className={`lg:col-span-5 p-8 md:p-12 flex flex-col justify-between bg-[#fbfbfb] ${isEven ? 'order-2' : 'order-2 lg:order-1'}`}>
+                          <div>
+                            <div className="flex items-center justify-between text-xs font-mono text-[#71717a] mb-4">
+                              <span className="font-semibold text-[#0a0a0c]">{project.client}</span>
+                              <span>{project.year}</span>
+                            </div>
+
+                            <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-[#0a0a0c] mb-4 group-hover:text-[#ee212e] transition-colors">
+                              {project.title}
+                            </h3>
+
+                            <p className="text-[#52525b] text-sm md:text-base leading-relaxed mb-6 font-normal">
+                              {project.tagline}
+                            </p>
+
+                            {/* Tags */}
+                            <div className="flex flex-wrap gap-2 mb-8">
+                              {project.deliverables.map((item, idx) => (
+                                <span 
+                                  key={idx}
+                                  className="text-[11px] font-mono uppercase px-2.5 py-1 bg-white text-[#4b5563] rounded border border-[#e4e4e7]"
+                                >
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-4 pt-4 border-t border-[#e5e5e7]">
+                            <button 
+                              onClick={() => navigateTo('case-study', project.id)}
+                              className="px-5 py-2.5 bg-white border border-[#0a0a0c] text-[#0a0a0c] rounded text-xs font-bold tracking-widest uppercase hover:bg-[#0a0a0c] hover:text-white transition-all flex items-center gap-2"
+                            >
+                              Case Study
+                              <ArrowUpRight className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              onClick={() => navigateTo('contact')}
+                              className="px-5 py-2.5 bg-[#ee212e] text-white rounded text-xs font-bold tracking-widest uppercase hover:bg-[#0a0a0c] transition-all"
+                            >
+                              Get Started
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* WHAT WE STAND FOR (STUDIO PHILOSOPHY) */}
+            <section id="philosophy-section" className="py-20 md:py-28 max-w-7xl mx-auto px-5 sm:px-8 border-b border-[#eaeaea]">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                
+                {/* Column Left: Visual Identity & Team */}
+                <div className="lg:col-span-5 space-y-6">
+                  <span className="text-xs font-mono uppercase tracking-widest text-[#ee212e] font-bold block">
+                    // Studio Values
+                  </span>
+                  <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tight text-[#0a0a0c] leading-none">
+                    WHAT WE <span className="text-[#ee212e]">STAND</span> FOR.
+                  </h2>
+
+                  <div className="relative aspect-[4/5] rounded-xl overflow-hidden border border-[#e4e4e7] shadow-sm">
+                    <img 
+                      src="https://images.unsplash.com/photo-1542744094-3a31f272c490?auto=format&fit=crop&w=1200&q=80" 
+                      alt="Wolf Design Studio Culture"
+                      className="w-full h-full object-cover filter contrast-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-6">
+                      <p className="text-xs font-mono text-white">
+                        Independent brand architects based in Clifton, Bristol & Pilton, Somerset.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column Right: The Three Pillars */}
+                <div className="lg:col-span-7 space-y-6 lg:pl-6">
+                  <div className="p-8 rounded-xl border border-[#e4e4e7] bg-[#fafafa] hover:border-[#ee212e] transition-all">
+                    <span className="text-xs font-mono text-[#ee212e] tracking-widest font-black uppercase block mb-2">
+                      [01] / PHILOSOPHY
+                    </span>
+                    <h3 className="text-2xl font-black uppercase text-[#0a0a0c] tracking-wide mb-3">
+                      Fearless Creativity
+                    </h3>
+                    <p className="text-[#52525b] leading-relaxed text-sm sm:text-base font-normal">
+                      We embrace fearless creativity as the cornerstone of our design philosophy. We don't shy away from pushing boundaries or exploring unfamiliar aesthetics. Relentless passion for typography, bold illustration, and raw visual storytelling allows us to break free from cookie-cutter corporate conventions.
+                    </p>
+                  </div>
+
+                  <div className="p-8 rounded-xl border border-[#e4e4e7] bg-[#fafafa] hover:border-[#ee212e] transition-all">
+                    <span className="text-xs font-mono text-[#ee212e] tracking-widest font-black uppercase block mb-2">
+                      [02] / PROCESS
+                    </span>
+                    <h3 className="text-2xl font-black uppercase text-[#0a0a0c] tracking-wide mb-3">
+                      No Nonsense Collaboration
+                    </h3>
+                    <p className="text-[#52525b] leading-relaxed text-sm sm:text-base font-normal">
+                      Client-centric dedication defines us. Unlike chaotic, pretentious agencies with endless middle-management layers, we talk straight, execute fast, and put your business goals first. Design is a commercial weapon, not just an art exercise.
+                    </p>
+                  </div>
+
+                  <div className="p-8 rounded-xl border border-[#e4e4e7] bg-[#fafafa] hover:border-[#ee212e] transition-all">
+                    <span className="text-xs font-mono text-[#ee212e] tracking-widest font-black uppercase block mb-2">
+                      [03] / IMPACT
+                    </span>
+                    <h3 className="text-2xl font-black uppercase text-[#0a0a0c] tracking-wide mb-3">
+                      Community Empowerment
+                    </h3>
+                    <p className="text-[#52525b] leading-relaxed text-sm sm:text-base font-normal">
+                      We support independent founders, rising craftsmen, and ambitious ventures. By elevating distinct voices and cultural challengers, we foster memorable brand ecosystems that reshape their respective industries.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-4 pt-4">
+                    <button 
+                      onClick={() => navigateTo('contact')}
+                      className="px-6 py-3.5 bg-[#ee212e] text-white font-extrabold uppercase text-xs tracking-widest rounded hover:bg-[#0a0a0c] transition-all"
+                    >
+                      LET'S WORK TOGETHER
+                    </button>
+                    <button 
+                      onClick={() => navigateTo('contact')}
+                      className="px-6 py-3.5 border border-[#0a0a0c] text-[#0a0a0c] font-extrabold uppercase text-xs tracking-widest rounded hover:border-[#ee212e] hover:text-[#ee212e] transition-all"
+                    >
+                      VIEW BRAND PACKAGES
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* DESIGN SERVICES GRID */}
+            <section id="services-section" className="py-20 md:py-28 max-w-7xl mx-auto px-5 sm:px-8 border-b border-[#eaeaea]">
+              <div className="mb-14">
+                <span className="text-xs font-mono uppercase tracking-widest text-[#ee212e] font-bold block mb-2">
+                  // Core Capabilities
+                </span>
+                <h2 className="text-3xl sm:text-5xl font-black uppercase text-[#0a0a0c] tracking-tight">
+                  Design Services
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {SERVICES_LIST.map((service, idx) => (
+                  <div 
+                    key={idx}
+                    className="p-6 bg-[#fafafa] border border-[#e4e4e7] rounded-xl hover:border-[#ee212e] transition-all duration-200 group hover:bg-white"
+                  >
+                    <div className="text-xs font-mono text-[#a1a1aa] mb-6 flex justify-between items-center font-bold">
+                      <span>0{idx + 1}</span>
+                      <Sparkles className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-[#ee212e] transition-opacity" />
+                    </div>
+                    <h4 className="text-lg font-bold uppercase text-[#0a0a0c] mb-2 group-hover:text-[#ee212e] transition-colors">
+                      {service.title}
+                    </h4>
+                    <p className="text-xs text-[#52525b] leading-relaxed font-normal">
+                      {service.desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* CALLOUT BANNER: READY TO COLLABORATE */}
+            <section className="py-20 max-w-7xl mx-auto px-5 sm:px-8">
+              <div className="bg-[#0a0a0c] text-white rounded-2xl p-10 sm:p-16 text-center space-y-6">
+                <h2 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight uppercase leading-none">
+                  {settings.ctaTitle}
+                </h2>
+                <p className="text-sm sm:text-base text-white/70 max-w-xl mx-auto font-medium">
+                  We partner with selected companies ready to step into their next era of category dominance.
+                </p>
+                <div className="flex flex-wrap justify-center gap-4 pt-4">
+                  <button 
+                    onClick={() => navigateTo('contact')}
+                    className="px-8 py-4 bg-[#ee212e] text-white font-extrabold uppercase text-xs tracking-widest rounded-md hover:bg-white hover:text-black transition-colors"
+                  >
+                    Get in touch
+                  </button>
+                  <a 
+                    href={`mailto:${settings.contactEmail}`}
+                    className="px-8 py-4 border border-white/30 text-white font-extrabold uppercase text-xs tracking-widest rounded-md hover:border-white transition-colors"
+                  >
+                    Email Directly
+                  </a>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* ========================================================
+            VIEW: CASE STUDY (FULL DETAIL PAGE - LIGHT AESTHETIC)
+        ======================================================== */}
+        {currentView === 'case-study' && activeProject && (
+          <article className="max-w-6xl mx-auto px-5 sm:px-8 py-16 md:py-24">
+            
+            <button 
+              onClick={() => navigateTo('home')}
+              className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#52525b] hover:text-[#ee212e] mb-10 transition-colors font-bold"
+            >
+              ← Back to Selected Work
+            </button>
+
+            <header className="space-y-6 mb-12">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="px-3 py-1 bg-[#ee212e]/10 border border-[#ee212e]/30 text-[#ee212e] text-xs font-mono uppercase tracking-wider rounded font-bold">
+                  {activeProject.category}
+                </span>
+                <span className="text-xs font-mono text-[#71717a]">
+                  Client: {activeProject.client} • {activeProject.year}
+                </span>
+              </div>
+
+              <h1 className="text-4xl sm:text-6xl md:text-7xl font-black uppercase text-[#0a0a0c] tracking-tight leading-[0.95]">
+                {activeProject.title} – {activeProject.tagline}
+              </h1>
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                {activeProject.deliverables.map((deliv, idx) => (
+                  <span key={idx} className="text-xs font-mono uppercase px-3 py-1 bg-[#f4f4f5] border border-[#e4e4e7] text-[#0a0a0c] rounded">
+                    {deliv}
+                  </span>
+                ))}
+              </div>
+            </header>
+
+            <div className="aspect-[16/9] w-full rounded-xl overflow-hidden border border-[#e4e4e7] shadow-sm mb-16">
+              <img 
+                src={activeProject.heroImage} 
+                alt={activeProject.title} 
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-12 py-10 border-t border-b border-[#eaeaea] mb-16">
+              <div className="md:col-span-4">
+                <h3 className="text-lg font-bold uppercase text-[#0a0a0c] font-mono tracking-wider mb-2">
+                  Project Intent
+                </h3>
+                <span className="text-xs font-mono text-[#ee212e] uppercase tracking-widest font-bold">
+                  Without Compromise
+                </span>
+              </div>
+              <div className="md:col-span-8 space-y-6 text-[#52525b] text-base leading-relaxed">
+                <p className="text-lg text-[#0a0a0c] font-medium">
+                  {activeProject.overview}
+                </p>
+                <p>
+                  {activeProject.story}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-10 mb-20">
+              <h3 className="text-2xl font-black uppercase text-[#0a0a0c] tracking-tight font-mono">
+                Visual Artifacts & Identity Assets
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {activeProject.gallery.map((imgUrl, i) => (
+                  <div key={i} className="aspect-[4/3] rounded-lg overflow-hidden border border-[#e4e4e7] shadow-sm">
+                    <img src={imgUrl} alt={`Showcase ${i+1}`} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-8 md:p-12 bg-[#fafafa] border border-[#e4e4e7] rounded-xl flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div>
+                <span className="text-xs font-mono uppercase tracking-widest text-[#71717a] block mb-1">
+                  Ready to evolve your brand?
+                </span>
+                <h4 className="text-xl md:text-2xl font-bold uppercase text-[#0a0a0c]">
+                  Let’s build something permanent.
+                </h4>
+              </div>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => navigateTo('home')}
+                  className="px-5 py-3 border border-[#0a0a0c] text-[#0a0a0c] text-xs font-bold uppercase tracking-widest rounded hover:bg-[#0a0a0c] hover:text-white transition-colors"
+                >
+                  All Projects
+                </button>
+                <button 
+                  onClick={() => navigateTo('contact')}
+                  className="px-6 py-3 bg-[#ee212e] text-white text-xs font-bold uppercase tracking-widest rounded hover:bg-[#0a0a0c] transition-colors"
+                >
+                  Get Started
+                </button>
+              </div>
+            </div>
+          </article>
+        )}
+
+        {/* ========================================================
+            VIEW: CONTACT / ONBOARDING ("GET STARTED")
+        ======================================================== */}
+        {currentView === 'contact' && (
+          <div className="max-w-6xl mx-auto px-5 sm:px-8 py-16 md:py-24">
+            
+            <div className="mb-14">
+              <span className="text-xs font-mono uppercase tracking-widest text-[#ee212e] font-bold block mb-2">
+                // Client Onboarding & Inquiries
+              </span>
+              <h1 className="text-4xl sm:text-6xl font-black uppercase text-[#0a0a0c] tracking-tight">
+                CONTACT & INITIATE
+              </h1>
+              <p className="text-sm md:text-base text-[#52525b] max-w-2xl mt-4">
+                This intake form is for founders and teams ready to commit. Please complete only if you’re prepared to move forward with your project in the upcoming calendar quarter.
+              </p>
+            </div>
+
+            {formSuccessMessage && (
+              <div className="p-6 mb-10 rounded-lg bg-[#f0fdf4] border border-[#22c55e]/40 text-[#166534] flex items-center gap-4">
+                <CheckCircle2 className="w-6 h-6 text-[#22c55e] shrink-0" />
+                <div>
+                  <h4 className="font-bold text-sm uppercase">Inquiry Dispatched</h4>
+                  <p className="text-xs text-[#15803d] mt-0.5">{formSuccessMessage}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+              
+              {/* The Form */}
+              <div className="lg:col-span-7 bg-[#fafafa] border border-[#e4e4e7] p-6 sm:p-10 rounded-xl shadow-sm">
+                <form onSubmit={handleContactSubmit} className="space-y-6">
+                  
+                  <div>
+                    <label className="block text-xs font-mono uppercase tracking-widest text-[#374151] mb-2 font-bold">
+                      Investment Budget *Required
+                    </label>
+                    <select 
+                      name="budget" 
+                      required 
+                      className="w-full bg-white border border-[#d1d5db] text-[#111827] rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#ee212e] transition-colors"
+                    >
+                      <option value="£6,500 – £8,500 - Foundation Projects">£6,500 – £8,500 (Foundation / Startup Package)</option>
+                      <option value="£8,500 – £11,500 - Growing Brands (Most Common)">£8,500 – £11,500 (Growing Brands - Most Common)</option>
+                      <option value="£15k+ - Comprehensive Rebrands & Market Leaders">£15,000+ (Comprehensive Enterprise Rebrand)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono uppercase tracking-widest text-[#374151] mb-2 font-bold">
+                      Target Timeframe
+                    </label>
+                    <select 
+                      name="timeframe" 
+                      className="w-full bg-white border border-[#d1d5db] text-[#111827] rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#ee212e] transition-colors"
+                    >
+                      <option value="Immediate (Next 30 Days)">Immediate (Next 30 Days)</option>
+                      <option value="Q1 / Q2 Focus">Q1 / Q2 Cycle</option>
+                      <option value="Flexible / Exploration">Flexible / Long-range planning</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-mono uppercase tracking-widest text-[#374151] mb-2 font-bold">
+                        Your Name *Required
+                      </label>
+                      <input 
+                        type="text" 
+                        name="name" 
+                        required 
+                        placeholder="e.g. Jordan Wolfe"
+                        className="w-full bg-white border border-[#d1d5db] text-[#111827] rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#ee212e] transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-mono uppercase tracking-widest text-[#374151] mb-2 font-bold">
+                        Location / City *Required
+                      </label>
+                      <input 
+                        type="text" 
+                        name="location" 
+                        required 
+                        placeholder="e.g. London, New York, Berlin"
+                        className="w-full bg-white border border-[#d1d5db] text-[#111827] rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#ee212e] transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-mono uppercase tracking-widest text-[#374151] mb-2 font-bold">
+                        Email Address *Required
+                      </label>
+                      <input 
+                        type="email" 
+                        name="email" 
+                        required 
+                        placeholder="name@company.com"
+                        className="w-full bg-white border border-[#d1d5db] text-[#111827] rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#ee212e] transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-mono uppercase tracking-widest text-[#374151] mb-2 font-bold">
+                        Company / Brand Type *Required
+                      </label>
+                      <input 
+                        type="text" 
+                        name="businessType" 
+                        required 
+                        placeholder="e.g. D2C Fashion, Fintech, Specialty Food"
+                        className="w-full bg-white border border-[#d1d5db] text-[#111827] rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#ee212e] transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono uppercase tracking-widest text-[#374151] mb-2 font-bold">
+                      Services Needed (Select multiple)
+                    </label>
+                    <div className="grid grid-cols-2 gap-2 text-xs font-mono text-[#374151]">
+                      {[
+                        'Brand Visual Identity',
+                        'Logo & System Design',
+                        'Packaging & Unboxing',
+                        'Art & Shoot Direction',
+                        'Apparel & Merchandising',
+                        'Custom Illustration'
+                      ].map((serviceName, idx) => (
+                        <label key={idx} className="flex items-center gap-2 p-2 bg-white rounded border border-[#e4e4e7] cursor-pointer hover:border-[#ee212e]">
+                          <input type="checkbox" name="services" value={serviceName} className="accent-[#ee212e]" />
+                          <span>{serviceName}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono uppercase tracking-widest text-[#374151] mb-2 font-bold">
+                      Brief Narrative or Ambition
+                    </label>
+                    <textarea 
+                      name="message" 
+                      rows={4}
+                      placeholder="Tell us what you're building, what makes it unique, and what your milestones look like..."
+                      className="w-full bg-white border border-[#d1d5db] text-[#111827] rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#ee212e] transition-colors"
+                    ></textarea>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full py-4 bg-[#ee212e] hover:bg-[#0a0a0c] text-white font-extrabold text-xs tracking-widest uppercase rounded-md transition-colors duration-200 shadow-md shadow-[#ee212e]/10"
+                  >
+                    Submit Project Intake Form
+                  </button>
+                </form>
+              </div>
+
+              {/* Physical Studio Contact Details */}
+              <div className="lg:col-span-5 space-y-10">
+                <div className="p-8 bg-[#fafafa] border border-[#e4e4e7] rounded-xl space-y-6">
+                  <div>
+                    <span className="text-xs font-mono text-[#ee212e] uppercase tracking-widest block mb-1 font-bold">
+                      Direct Inquiries
+                    </span>
+                    <a href={`mailto:${settings.contactEmail}`} className="text-lg md:text-xl font-mono font-bold text-[#0a0a0c] hover:text-[#ee212e] transition-colors">
+                      {settings.contactEmail}
+                    </a>
+                  </div>
+
+                  <div className="pt-4 border-t border-[#e5e5e7]">
+                    <span className="text-xs font-mono text-[#71717a] uppercase tracking-widest block mb-1">
+                      Studio Locations
+                    </span>
+                    <p className="text-sm font-medium text-[#0a0a0c]">{settings.location1}</p>
+                    <p className="text-sm font-medium text-[#52525b]">{settings.location2}</p>
+                  </div>
+
+                  <div className="pt-4 border-t border-[#e5e5e7]">
+                    <span className="text-xs font-mono text-[#71717a] uppercase tracking-widest block mb-2">
+                      Online & Dispatch
+                    </span>
+                    <div className="flex flex-col gap-1.5 text-xs font-mono text-[#0a0a0c]">
+                      <a href="https://instagram.com" target="_blank" rel="noreferrer" className="hover:text-[#ee212e]">Instagram: @heyadamdesign</a>
+                      <a href="https://behance.net" target="_blank" rel="noreferrer" className="hover:text-[#ee212e]">Behance: /famouswolf</a>
+                      <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="hover:text-[#ee212e]">LinkedIn: /in/famouswolfdesign</a>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 border border-dashed border-[#d4d4d8] rounded-lg text-xs font-mono text-[#71717a] leading-relaxed bg-[#fbfbfb]">
+                  <p className="text-[#0a0a0c] font-bold mb-1">NOTE ON AVAILABILITY</p>
+                  We prioritize long-term brand equity over high client turnover. We take on no more than 3 active client identity cycles per quarter to safeguard craft quality.
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            VIEW: SECURE HIDDEN ADMIN CMS (LIGHT THEMED VAULT)
+        ======================================================== */}
+        {currentView === 'admin' && (
+          <div className="max-w-7xl mx-auto px-5 sm:px-8 py-16 animate-fadeIn">
+            
+            {/* If NOT logged in: Show Hardened Gate */}
+            {!isAdminLoggedIn ? (
+              <div className="max-w-md mx-auto my-12 p-8 bg-[#fafafa] border border-[#e4e4e7] rounded-xl shadow-xl relative">
+                
+                {/* Security Status Badge */}
+                <div className="flex items-center justify-between pb-4 border-b border-[#e5e5e7] mb-6">
+                  <div className="flex items-center gap-2 text-xs font-mono text-[#ee212e] font-bold">
+                    <ShieldAlert className="w-4 h-4 text-[#ee212e]" />
+                    <span>RESTRICTED ACCESS</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-[#71717a] uppercase">
+                    SHA-256 Salted
+                  </span>
+                </div>
+
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold uppercase text-[#0a0a0c] tracking-wide">Studio Vault Gate</h2>
+                  <p className="text-xs font-mono text-[#71717a] mt-1">
+                    Direct path authenticated. Please present your cryptographic master key.
+                  </p>
+                </div>
+
+                {/* Brute Force Lockout Countdown Display */}
+                {lockoutRemaining > 0 ? (
+                  <div className="p-4 bg-red-50 border border-red-300 rounded-lg text-center space-y-2 mb-6">
+                    <AlertTriangle className="w-6 h-6 text-[#ee212e] mx-auto animate-bounce" />
+                    <p className="text-xs font-mono font-bold text-[#b91c1c] uppercase tracking-wider">
+                      BRUTE FORCE LOCKOUT ACTIVE
+                    </p>
+                    <p className="text-2xl font-mono font-black text-[#ee212e]">
+                      {lockoutRemaining}s
+                    </p>
+                    <p className="text-[11px] font-mono text-[#991b1b]">
+                      Authentication subsystem disabled to prevent dictionary attacks.
+                    </p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleAdminLogin} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-mono uppercase tracking-widest text-[#374151] mb-2 flex items-center justify-between font-bold">
+                        <span>Master Passkey</span>
+                        <span className="text-[#9ca3af] text-[10px]">Max 3 Tries</span>
+                      </label>
+                      <input 
+                        type="password"
+                        value={passwordInput}
+                        onChange={(e) => setPasswordInput(e.target.value)}
+                        placeholder="Enter admin password..."
+                        className="w-full bg-white border border-[#d1d5db] text-[#111827] rounded px-4 py-3 text-sm focus:outline-none focus:border-[#ee212e] font-mono"
+                        autoFocus
+                      />
+                      <p className="text-[10px] font-mono text-[#71717a] mt-1.5">
+                        Default passkey: <span className="text-[#0a0a0c] font-bold">wolf2026</span>
+                      </p>
+                    </div>
+
+                    {authError && (
+                      <p className="text-xs font-mono text-[#b91c1c] bg-red-50 p-2.5 rounded border border-red-200">
+                        {authError}
+                      </p>
+                    )}
+
+                    <button 
+                      type="submit"
+                      className="w-full py-3 bg-[#ee212e] hover:bg-[#0a0a0c] font-extrabold uppercase text-xs tracking-widest text-white rounded transition-colors"
+                    >
+                      Verify & Open Vault
+                    </button>
+                  </form>
+                )}
+
+                <div className="mt-8 pt-4 border-t border-[#e5e5e7] text-center">
+                  <button 
+                    onClick={() => navigateTo('home')}
+                    className="text-[11px] font-mono text-[#71717a] hover:text-[#0a0a0c]"
+                  >
+                    ← Exit to public website
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* If Authenticated: Complete Hardened CMS Dashboard */
+              <div className="space-y-8">
+                
+                {/* CMS Top Bar with Active Security Status */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-[#e5e5e7] gap-4">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-green-700 mb-1">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-green-50 border border-green-300 text-green-800 font-bold">
+                        <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
+                        Hardened Session Active
+                      </span>
+                      <span className="text-[#ccc]">|</span>
+                      <span className="inline-flex items-center gap-1 text-[#52525b]">
+                        <Clock className="w-3 h-3 text-[#71717a]" />
+                        Auto-Logout: {sessionRemainingMinutes}m
+                      </span>
+                      <span className="text-[#ccc]">|</span>
+                      <span className="text-[#71717a]">Route: #{secretSlug}</span>
+                    </div>
+                    <h1 className="text-3xl font-black uppercase text-[#0a0a0c] tracking-tight">
+                      STUDIO VAULT & CMS
+                    </h1>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => navigateTo('home')}
+                      className="px-3 py-2 border border-[#d1d5db] hover:border-[#0a0a0c] text-xs font-mono text-[#374151] hover:text-[#0a0a0c] rounded flex items-center gap-1.5 transition-colors bg-white shadow-sm"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      View Public Site
+                    </button>
+                    <button 
+                      onClick={handleResetData}
+                      title="Reset mock data"
+                      className="px-3 py-2 border border-[#d1d5db] hover:border-[#0a0a0c] text-xs font-mono text-[#71717a] hover:text-[#0a0a0c] rounded flex items-center gap-1.5 transition-colors bg-white shadow-sm"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Reset Demo
+                    </button>
+                    <button 
+                      onClick={() => handleAdminLogout(false)}
+                      className="px-4 py-2 bg-red-50 hover:bg-[#ee212e] hover:text-white border border-red-200 text-[#b91c1c] text-xs font-mono uppercase tracking-wider rounded flex items-center gap-2 transition-colors"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      Lock & Sign Out
+                    </button>
+                  </div>
+                </div>
+
+                {/* Dashboard Tabs */}
+                <div className="flex flex-wrap gap-2 border-b border-[#e5e5e7] pb-2 text-xs font-mono uppercase tracking-wider font-bold">
+                  <button 
+                    onClick={() => setAdminTab('projects')}
+                    className={`px-4 py-2 rounded flex items-center gap-2 transition-colors ${
+                      adminTab === 'projects' ? 'bg-[#0a0a0c] text-white' : 'text-[#71717a] hover:text-[#0a0a0c]'
+                    }`}
+                  >
+                    <FolderGit2 className="w-3.5 h-3.5" />
+                    Projects Archive ({projects.length})
+                  </button>
+                  <button 
+                    onClick={() => setAdminTab('inquiries')}
+                    className={`px-4 py-2 rounded flex items-center gap-2 transition-colors ${
+                      adminTab === 'inquiries' ? 'bg-[#0a0a0c] text-white' : 'text-[#71717a] hover:text-[#0a0a0c]'
+                    }`}
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    Intake Inquiries ({inquiries.length})
+                  </button>
+                  <button 
+                    onClick={() => setAdminTab('settings')}
+                    className={`px-4 py-2 rounded flex items-center gap-2 transition-colors ${
+                      adminTab === 'settings' ? 'bg-[#0a0a0c] text-white' : 'text-[#71717a] hover:text-[#0a0a0c]'
+                    }`}
+                  >
+                    <Sliders className="w-3.5 h-3.5" />
+                    Site Content
+                  </button>
+                  <button 
+                    onClick={() => setAdminTab('security')}
+                    className={`px-4 py-2 rounded flex items-center gap-2 transition-colors ${
+                      adminTab === 'security' ? 'bg-[#ee212e] text-white' : 'text-[#71717a] hover:text-[#0a0a0c]'
+                    }`}
+                  >
+                    <Key className="w-3.5 h-3.5" />
+                    Security & Route Gate
+                  </button>
+                </div>
+
+                {/* TAB 1: PROJECT MANAGEMENT */}
+                {adminTab === 'projects' && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-mono text-[#71717a]">
+                        Manage published case studies shown on the live homepage and archive.
+                      </p>
+                      <button 
+                        onClick={() => {
+                          const newP = {
+                            id: `project-${Date.now()}`,
+                            title: 'New Editorial Identity',
+                            tagline: 'Bold concept for a next-generation cultural movement.',
+                            client: 'Client Studio',
+                            year: '2026',
+                            category: 'Brand Visual Identity',
+                            deliverables: ['Identity System', 'Art Direction', 'Custom Type'],
+                            heroImage: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=1200&q=80',
+                            gallery: [
+                              'https://images.unsplash.com/photo-1542744094-3a31f272c490?auto=format&fit=crop&w=1200&q=80'
+                            ],
+                            overview: 'Detailed project summary outlining client background and tactical challenges.',
+                            story: 'Narrative detailing execution, materials, craftsmanship, and typographic treatment.',
+                            featured: true,
+                            published: true
+                          };
+                          setProjects([newP, ...projects]);
+                          setEditingProject(newP);
+                        }}
+                        className="px-4 py-2 bg-[#ee212e] text-white text-xs font-bold font-mono uppercase tracking-wider rounded flex items-center gap-2 hover:bg-[#0a0a0c] transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add Project
+                      </button>
+                    </div>
+
+                    {/* Quick Edit Inline Drawer */}
+                    {editingProject && (
+                      <div className="p-6 bg-[#fafafa] border border-[#ee212e] rounded-xl space-y-4 shadow-md">
+                        <div className="flex items-center justify-between pb-3 border-b border-[#e5e5e7]">
+                          <span className="text-xs font-mono text-[#ee212e] uppercase font-bold">
+                            // Editing: {editingProject.title}
+                          </span>
+                          <button 
+                            onClick={() => setEditingProject(null)}
+                            className="text-[#71717a] hover:text-[#0a0a0c]"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="text-[11px] font-mono text-[#374151] font-bold block mb-1">Project Title</label>
+                            <input 
+                              type="text" 
+                              value={editingProject.title}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setEditingProject(prev => ({ ...prev, title: val }));
+                                setProjects(projects.map(p => p.id === editingProject.id ? { ...p, title: val } : p));
+                              }}
+                              className="w-full bg-white border border-[#d1d5db] px-3 py-2 text-xs text-[#111827] rounded focus:outline-none focus:border-[#ee212e]"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-mono text-[#374151] font-bold block mb-1">Client Name</label>
+                            <input 
+                              type="text" 
+                              value={editingProject.client}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setEditingProject(prev => ({ ...prev, client: val }));
+                                setProjects(projects.map(p => p.id === editingProject.id ? { ...p, client: val } : p));
+                              }}
+                              className="w-full bg-white border border-[#d1d5db] px-3 py-2 text-xs text-[#111827] rounded focus:outline-none focus:border-[#ee212e]"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-mono text-[#374151] font-bold block mb-1">Category</label>
+                            <input 
+                              type="text" 
+                              value={editingProject.category}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setEditingProject(prev => ({ ...prev, category: val }));
+                                setProjects(projects.map(p => p.id === editingProject.id ? { ...p, category: val } : p));
+                              }}
+                              className="w-full bg-white border border-[#d1d5db] px-3 py-2 text-xs text-[#111827] rounded focus:outline-none focus:border-[#ee212e]"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-mono text-[#374151] font-bold block mb-1">Tagline / Headline Teaser</label>
+                          <input 
+                            type="text" 
+                            value={editingProject.tagline}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditingProject(prev => ({ ...prev, tagline: val }));
+                              setProjects(projects.map(p => p.id === editingProject.id ? { ...p, tagline: val } : p));
+                            }}
+                            className="w-full bg-white border border-[#d1d5db] px-3 py-2 text-xs text-[#111827] rounded focus:outline-none focus:border-[#ee212e]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-mono text-[#374151] font-bold block mb-1">Cover Image URL</label>
+                          <input 
+                            type="text" 
+                            value={editingProject.heroImage}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditingProject(prev => ({ ...prev, heroImage: val }));
+                              setProjects(projects.map(p => p.id === editingProject.id ? { ...p, heroImage: val } : p));
+                            }}
+                            className="w-full bg-white border border-[#d1d5db] px-3 py-2 text-xs text-[#111827] rounded focus:outline-none font-mono"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-mono text-[#374151] font-bold block mb-1">Case Study Narrative</label>
+                          <textarea 
+                            rows={3}
+                            value={editingProject.story}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditingProject(prev => ({ ...prev, story: val }));
+                              setProjects(projects.map(p => p.id === editingProject.id ? { ...p, story: val } : p));
+                            }}
+                            className="w-full bg-white border border-[#d1d5db] px-3 py-2 text-xs text-[#111827] rounded focus:outline-none font-sans"
+                          />
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                          <button 
+                            onClick={() => setEditingProject(null)}
+                            className="px-4 py-2 bg-[#0a0a0c] text-white font-mono text-xs font-bold rounded hover:bg-[#ee212e] transition-colors"
+                          >
+                            Done Editing
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Projects Table */}
+                    <div className="border border-[#e4e4e7] rounded-xl overflow-hidden bg-white shadow-sm">
+                      <table className="w-full text-left text-xs font-mono">
+                        <thead className="bg-[#f7f7f9] border-b border-[#e5e5e7] text-[#71717a] uppercase tracking-wider font-bold">
+                          <tr>
+                            <th className="p-4">Cover</th>
+                            <th className="p-4">Title & Client</th>
+                            <th className="p-4">Category</th>
+                            <th className="p-4">Status</th>
+                            <th className="p-4 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#f0f0f2]">
+                          {projects.map(p => (
+                            <tr key={p.id} className="hover:bg-[#fbfbfb] transition-colors">
+                              <td className="p-4 w-20">
+                                <img src={p.heroImage} alt="" className="w-16 h-10 object-cover rounded border border-[#e4e4e7]" />
+                              </td>
+                              <td className="p-4 font-bold text-[#0a0a0c]">
+                                {p.title}
+                                <span className="block text-[11px] font-normal text-[#71717a]">{p.client} • {p.year}</span>
+                              </td>
+                              <td className="p-4 text-[#52525b]">{p.category}</td>
+                              <td className="p-4">
+                                <button 
+                                  onClick={() => {
+                                    setProjects(projects.map(item => item.id === p.id ? { ...item, published: !item.published } : item));
+                                  }}
+                                  className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold ${
+                                    p.published ? 'bg-green-50 text-green-700 border border-green-300' : 'bg-yellow-50 text-yellow-700 border border-yellow-300'
+                                  }`}
+                                >
+                                  {p.published ? 'Live' : 'Draft'}
+                                </button>
+                              </td>
+                              <td className="p-4 text-right space-x-2">
+                                <button 
+                                  onClick={() => setEditingProject(p)}
+                                  className="p-1.5 hover:text-[#ee212e] text-[#71717a] inline-block"
+                                  title="Edit Project"
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                </button>
+                                <button 
+                                  onClick={() => navigateTo('case-study', p.id)}
+                                  className="p-1.5 hover:text-[#ee212e] text-[#71717a] inline-block"
+                                  title="Preview on Site"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    if (window.confirm(`Delete "${p.title}"?`)) {
+                                      setProjects(projects.filter(item => item.id !== p.id));
+                                    }
+                                  }}
+                                  className="p-1.5 hover:text-[#ee212e] text-[#71717a] inline-block"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 2: INTAKE INQUIRIES */}
+                {adminTab === 'inquiries' && (
+                  <div className="space-y-6">
+                    <p className="text-xs font-mono text-[#71717a]">
+                      All customer requests dispatched from the public onboarding form.
+                    </p>
+
+                    <div className="space-y-4">
+                      {inquiries.length === 0 ? (
+                        <div className="p-12 text-center border border-dashed border-[#d4d4d8] rounded-xl text-xs font-mono text-[#71717a] bg-white">
+                          No client inquiries logged yet.
+                        </div>
+                      ) : (
+                        inquiries.map(inq => (
+                          <div 
+                            key={inq.id}
+                            className="p-6 bg-white border border-[#e4e4e7] rounded-xl space-y-4 hover:border-[#0a0a0c] transition-colors shadow-sm"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#f0f0f2] pb-3">
+                              <div>
+                                <span className="text-base font-bold text-[#0a0a0c] uppercase mr-3">{inq.name}</span>
+                                <span className="text-xs font-mono text-[#71717a]">{inq.email}</span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs font-mono text-[#71717a]">{inq.date}</span>
+                                <select 
+                                  value={inq.status}
+                                  onChange={(e) => {
+                                    const newStatus = e.target.value;
+                                    setInquiries(inquiries.map(item => item.id === inq.id ? { ...item, status: newStatus } : item));
+                                  }}
+                                  className="bg-[#f7f7f9] border border-[#d1d5db] text-xs font-mono text-[#111827] rounded px-2 py-1 font-bold"
+                                >
+                                  <option value="New">New</option>
+                                  <option value="Contacted">Contacted</option>
+                                  <option value="In Progress">In Progress</option>
+                                  <option value="Archived">Archived</option>
+                                </select>
+                                <button 
+                                  onClick={() => setInquiries(inquiries.filter(item => item.id !== inq.id))}
+                                  className="text-[#71717a] hover:text-[#ee212e] p-1"
+                                  title="Delete lead"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
+                              <div>
+                                <span className="text-[#71717a] block">Location:</span>
+                                <span className="text-[#0a0a0c] font-bold">{inq.location}</span>
+                              </div>
+                              <div>
+                                <span className="text-[#71717a] block">Budget Bracket:</span>
+                                <span className="text-[#ee212e] font-black">{inq.budget}</span>
+                              </div>
+                              <div>
+                                <span className="text-[#71717a] block">Timeframe:</span>
+                                <span className="text-[#0a0a0c]">{inq.timeframe}</span>
+                              </div>
+                              <div>
+                                <span className="text-[#71717a] block">Category:</span>
+                                <span className="text-[#0a0a0c]">{inq.businessType}</span>
+                              </div>
+                            </div>
+
+                            {inq.notes && (
+                              <div className="p-3 bg-[#fafafa] rounded border border-[#e4e4e7] text-xs text-[#374151]">
+                                "{inq.notes}"
+                              </div>
+                            )}
+
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {inq.services?.map((s, idx) => (
+                                <span key={idx} className="px-2 py-0.5 bg-[#f4f4f5] border border-[#e4e4e7] rounded text-[10px] font-mono text-[#52525b]">
+                                  {s}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 3: SITE CONTENT SETTINGS */}
+                {adminTab === 'settings' && (
+                  <div className="max-w-2xl bg-white border border-[#e4e4e7] p-6 sm:p-8 rounded-xl space-y-6 shadow-sm">
+                    <div>
+                      <h3 className="text-lg font-bold uppercase text-[#0a0a0c] font-mono">
+                        Global Agency Branding
+                      </h3>
+                      <p className="text-xs text-[#71717a] font-mono mt-0.5">
+                        Update headlines, studio metadata, and direct points of contact.
+                      </p>
+                    </div>
+
+                    <div className="space-y-4 text-xs font-mono">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[#374151] font-bold block mb-1">Studio Primary Name</label>
+                          <input 
+                            type="text" 
+                            value={settings.studioName}
+                            onChange={(e) => setSettings({ ...settings, studioName: e.target.value })}
+                            className="w-full bg-[#f9f9fb] border border-[#d1d5db] px-3 py-2 rounded text-[#0a0a0c] focus:outline-none focus:border-[#ee212e]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[#374151] font-bold block mb-1">Subtitle / Sub-branding</label>
+                          <input 
+                            type="text" 
+                            value={settings.studioSub}
+                            onChange={(e) => setSettings({ ...settings, studioSub: e.target.value })}
+                            className="w-full bg-[#f9f9fb] border border-[#d1d5db] px-3 py-2 rounded text-[#0a0a0c] focus:outline-none focus:border-[#ee212e]"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[#374151] font-bold block mb-1">Hero Big Header Words (1, 2, 3)</label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <input 
+                            type="text" 
+                            value={settings.heroHeadlineWord1}
+                            onChange={(e) => setSettings({ ...settings, heroHeadlineWord1: e.target.value })}
+                            className="bg-[#f9f9fb] border border-[#d1d5db] px-3 py-2 rounded text-[#0a0a0c] focus:outline-none focus:border-[#ee212e]"
+                          />
+                          <input 
+                            type="text" 
+                            value={settings.heroHeadlineWord2}
+                            onChange={(e) => setSettings({ ...settings, heroHeadlineWord2: e.target.value })}
+                            className="bg-[#f9f9fb] border border-[#d1d5db] px-3 py-2 rounded text-[#0a0a0c] focus:outline-none focus:border-[#ee212e]"
+                          />
+                          <input 
+                            type="text" 
+                            value={settings.heroHeadlineWord3}
+                            onChange={(e) => setSettings({ ...settings, heroHeadlineWord3: e.target.value })}
+                            className="bg-[#f9f9fb] border border-[#d1d5db] px-3 py-2 rounded text-[#0a0a0c] focus:outline-none focus:border-[#ee212e]"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[#374151] font-bold block mb-1">Hero Narrative Tagline</label>
+                        <textarea 
+                          rows={2}
+                          value={settings.heroTagline}
+                          onChange={(e) => setSettings({ ...settings, heroTagline: e.target.value })}
+                          className="w-full bg-[#f9f9fb] border border-[#d1d5db] px-3 py-2 rounded text-[#0a0a0c] font-sans text-xs focus:outline-none focus:border-[#ee212e]"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[#374151] font-bold block mb-1">Contact Email</label>
+                          <input 
+                            type="email" 
+                            value={settings.contactEmail}
+                            onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })}
+                            className="w-full bg-[#f9f9fb] border border-[#d1d5db] px-3 py-2 rounded text-[#0a0a0c] focus:outline-none focus:border-[#ee212e]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[#374151] font-bold block mb-1">Callout Title</label>
+                          <input 
+                            type="text" 
+                            value={settings.ctaTitle}
+                            onChange={(e) => setSettings({ ...settings, ctaTitle: e.target.value })}
+                            className="w-full bg-[#f9f9fb] border border-[#d1d5db] px-3 py-2 rounded text-[#0a0a0c] focus:outline-none focus:border-[#ee212e]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-[#e5e5e7] flex justify-between items-center">
+                      <span className="text-[11px] font-mono text-green-600 font-bold">
+                        ✓ All settings are synchronized in state
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 4: SECURITY HARDENING & SECRET ROUTE MANAGEMENT */}
+                {adminTab === 'security' && (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    
+                    {/* Security Control forms */}
+                    <div className="lg:col-span-7 space-y-6">
+                      
+                      {secSuccessMsg && (
+                        <div className="p-4 rounded-lg bg-green-50 border border-green-300 text-green-800 text-xs font-mono font-bold">
+                          {secSuccessMsg}
+                        </div>
+                      )}
+
+                      {/* Secret Direct Route Configuration */}
+                      <div className="p-6 bg-white border border-[#e4e4e7] rounded-xl space-y-4 shadow-sm">
+                        <div className="flex items-center gap-2">
+                          <Key className="w-4 h-4 text-[#ee212e]" />
+                          <h3 className="text-sm font-bold uppercase font-mono text-[#0a0a0c]">
+                            Secret Direct Route Slug
+                          </h3>
+                        </div>
+                        <p className="text-xs font-mono text-[#52525b] leading-relaxed">
+                          The CMS is strictly invisible on all public menus. To reach this admin vault, you must navigate directly to the secret hash path or press <kbd className="px-1.5 py-0.5 bg-[#f4f4f5] text-[#0a0a0c] rounded border border-[#d4d4d8] font-bold">Ctrl+Shift+Alt+A</kbd>.
+                        </p>
+
+                        <div className="p-3 bg-[#f7f7f9] border border-[#e4e4e7] rounded flex items-center justify-between text-xs font-mono">
+                          <code className="text-[#ee212e] font-bold">
+                            {window.location.origin}/#{secretSlug}
+                          </code>
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(`${window.location.origin}/#/${secretSlug}`);
+                              setCopiedSlug(true);
+                              setTimeout(() => setCopiedSlug(false), 2000);
+                            }}
+                            className="px-2 py-1 bg-white hover:bg-[#e4e4e7] text-[#0a0a0c] border border-[#d1d5db] rounded text-[11px] flex items-center gap-1 font-bold"
+                          >
+                            {copiedSlug ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
+                            {copiedSlug ? 'Copied' : 'Copy Link'}
+                          </button>
+                        </div>
+
+                        <form onSubmit={handleChangeSlug} className="space-y-3 pt-2">
+                          <label className="text-[11px] font-mono text-[#71717a] block">
+                            Change Secret Route Name (e.g. "vault-wolf-99", "admin-x7")
+                          </label>
+                          <div className="flex gap-2">
+                            <input 
+                              type="text" 
+                              placeholder="new-secret-slug..." 
+                              value={newSlugVal}
+                              onChange={(e) => setNewSlugVal(e.target.value)}
+                              className="flex-1 bg-white border border-[#d1d5db] px-3 py-2 text-xs font-mono text-[#0a0a0c] rounded focus:outline-none focus:border-[#ee212e]"
+                            />
+                            <button 
+                              type="submit"
+                              className="px-4 py-2 bg-[#0a0a0c] text-white font-mono font-bold text-xs uppercase rounded hover:bg-[#ee212e] transition-colors"
+                            >
+                              Update Slug
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+
+                      {/* Cryptographic Password Re-keying */}
+                      <div className="p-6 bg-white border border-[#e4e4e7] rounded-xl space-y-4 shadow-sm">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="w-4 h-4 text-green-600" />
+                          <h3 className="text-sm font-bold uppercase font-mono text-[#0a0a0c]">
+                            Update Master Passkey (Web Crypto SHA-256)
+                          </h3>
+                        </div>
+                        <p className="text-xs font-mono text-[#52525b]">
+                          Passwords are salted and passed through the browser's native hardware-accelerated SubtleCrypto digest before saving.
+                        </p>
+
+                        <form onSubmit={handleChangePassword} className="space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-[11px] font-mono text-[#374151] font-bold block mb-1">New Password</label>
+                              <input 
+                                type="password" 
+                                value={newPasswordVal}
+                                onChange={(e) => setNewPasswordVal(e.target.value)}
+                                placeholder="Minimum 6 characters" 
+                                className="w-full bg-white border border-[#d1d5db] px-3 py-2 text-xs font-mono text-[#0a0a0c] rounded focus:outline-none focus:border-[#ee212e]"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[11px] font-mono text-[#374151] font-bold block mb-1">Confirm Password</label>
+                              <input 
+                                type="password" 
+                                value={confirmPasswordVal}
+                                onChange={(e) => setConfirmPasswordVal(e.target.value)}
+                                placeholder="Confirm new password" 
+                                className="w-full bg-white border border-[#d1d5db] px-3 py-2 text-xs font-mono text-[#0a0a0c] rounded focus:outline-none focus:border-[#ee212e]"
+                              />
+                            </div>
+                          </div>
+                          <button 
+                            type="submit"
+                            className="px-5 py-2.5 bg-[#ee212e] text-white font-mono font-bold text-xs uppercase tracking-wider rounded hover:bg-[#0a0a0c] transition-colors"
+                          >
+                            Hash & Commit New Key
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+
+                    {/* Right Column: Security Audits & Diagnostics */}
+                    <div className="lg:col-span-5 space-y-6">
+                      <div className="p-6 bg-white border border-[#e4e4e7] rounded-xl space-y-4 shadow-sm">
+                        <div className="flex items-center gap-2">
+                          <History className="w-4 h-4 text-[#71717a]" />
+                          <h3 className="text-sm font-bold uppercase font-mono text-[#0a0a0c]">
+                            Security Audit Log
+                          </h3>
+                        </div>
+                        <div className="max-h-80 overflow-y-auto space-y-2 pr-1 divide-y divide-[#f0f0f2]">
+                          {auditLogs.length === 0 ? (
+                            <p className="text-xs font-mono text-[#71717a]">No events logged.</p>
+                          ) : (
+                            auditLogs.map((log) => (
+                              <div key={log.id} className="pt-2 text-xs font-mono flex items-start justify-between">
+                                <div>
+                                  <span className="text-[#0a0a0c] font-bold block">{log.event}</span>
+                                  <span className="text-[10px] text-[#71717a]">{log.timestamp}</span>
+                                </div>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                                  log.status === 'SUCCESS' ? 'text-green-700 bg-green-50 border border-green-200' :
+                                  log.status === 'DENIED' ? 'text-red-700 bg-red-50 border border-red-200' :
+                                  'text-amber-700 bg-amber-50 border border-amber-200'
+                                }`}>
+                                  {log.status}
+                                </span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Cryptographic Proof of Salt and Hash */}
+                      <div className="p-4 bg-[#f9f9fb] border border-[#e4e4e7] rounded-lg text-[10px] font-mono text-[#71717a] space-y-1">
+                        <p className="text-[#0a0a0c] font-bold">CRYPTO ENGINE STATE</p>
+                        <p className="truncate">Active Salt: <span className="text-[#0a0a0c]">{pwdSalt}</span></p>
+                        <p className="truncate">Hash (SHA-256): <span className="text-[#0a0a0c]">{pwdHash}</span></p>
+                        <p>Brute Lockout Policy: Exponential delay at 3 failed attempts.</p>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+
+              </div>
+            )}
+          </div>
+        )}
+
+      </main>
+
+      {/* 3. FOOTER (WHITE-DOMINANT WITH CRISP BORDERS) */}
+      <footer className="border-t border-[#eaeaea] bg-[#fbfbfb] py-16 px-5 sm:px-8">
+        <div className="max-w-7xl mx-auto space-y-12">
+          
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-10 border-b border-[#e5e5e7]">
+            <div>
+              <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-[#0a0a0c] leading-none">
+                LET'S WORK ON SOMETHING. <br />
+                <span className="text-[#ee212e]">GET IN TOUCH.</span>
+              </h2>
+            </div>
+
+            <button 
+              onClick={() => navigateTo('contact')}
+              className="px-6 py-3.5 bg-[#0a0a0c] hover:bg-[#ee212e] text-white font-bold uppercase text-xs tracking-widest rounded-md self-start transition-all shadow-sm"
+            >
+              Start Intake Application →
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-xs font-mono">
+            {/* Studio */}
+            <div className="space-y-3">
+              <span className="text-[#71717a] uppercase tracking-wider block font-bold">Studio Bases</span>
+              <p className="text-[#3f3f46] font-medium">{settings.location1}</p>
+              <p className="text-[#3f3f46] font-medium">{settings.location2}</p>
+            </div>
+
+            {/* Business */}
+            <div className="space-y-3">
+              <span className="text-[#71717a] uppercase tracking-wider block font-bold">Business</span>
+              <a href={`mailto:${settings.contactEmail}`} className="text-[#0a0a0c] font-bold hover:text-[#ee212e] block break-all">
+                {settings.contactEmail}
+              </a>
+              <span className="text-[#71717a]">Mon - Fri, 09:00 - 18:00 GMT</span>
+            </div>
+
+            {/* Social */}
+            <div className="space-y-3">
+              <span className="text-[#71717a] uppercase tracking-wider block font-bold">Social Network</span>
+              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="text-[#0a0a0c] hover:text-[#ee212e] block">Instagram</a>
+              <a href="https://behance.net" target="_blank" rel="noreferrer" className="text-[#0a0a0c] hover:text-[#ee212e] block">Behance</a>
+              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="text-[#0a0a0c] hover:text-[#ee212e] block">LinkedIn</a>
+            </div>
+
+            {/* Public Navigation */}
+            <div className="space-y-3">
+              <span className="text-[#71717a] uppercase tracking-wider block font-bold">Index</span>
+              <button onClick={() => navigateTo('home')} className="text-[#0a0a0c] hover:text-[#ee212e] block">Selected Work</button>
+              <button 
+                onClick={() => {
+                  navigateTo('home');
+                  setTimeout(() => {
+                    document.getElementById('services-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }} 
+                className="text-[#0a0a0c] hover:text-[#ee212e] block"
+              >
+                Capabilities
+              </button>
+              <button 
+                onClick={() => {
+                  navigateTo('home');
+                  setTimeout(() => {
+                    document.getElementById('philosophy-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }} 
+                className="text-[#0a0a0c] hover:text-[#ee212e] block"
+              >
+                About Studio
+              </button>
+              <button onClick={() => navigateTo('contact')} className="text-[#0a0a0c] hover:text-[#ee212e] block">Project Onboarding</button>
+            </div>
+          </div>
+
+          {/* Legal / Colophon */}
+          <div className="pt-8 border-t border-[#e5e5e7] flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono text-[#71717a] gap-4">
+            <p>© {new Date().getFullYear()} Famous Wolf Design Co. Independent Brand Design & Direction.</p>
+            <p>Designed with raw typography and fearless dedication.</p>
+          </div>
+        </div>
+      </footer>
+
+    </div>
+  );
+}
